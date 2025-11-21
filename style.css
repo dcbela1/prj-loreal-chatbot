@@ -8,7 +8,7 @@
 /* —— body + fonts —— */
 body {
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
-  color: #f5f5f5;
+  color: #ffffff;
   background: #000;            /* black page background */
   display: flex;
   justify-content: center;
@@ -53,7 +53,7 @@ body {
 
 /* Latest question bar */
 .current-question {
-  min-height: 32px;
+  min-height: 28px;
   padding: 8px 12px;
   font-size: 14px;
   color: #c9a46a;
@@ -82,16 +82,22 @@ body {
 }
 
 .msg.user {
-  margin-left: auto;
   background: #f5f5f5;
   color: #000;
+  border-radius: 16px;
+  padding: 8px 12px;
+  margin-left: auto;
+  max-width: 70%;
 }
 
 .msg.ai {
-  margin-right: auto;
   background: #222;
-  color: #f5f5f5;
+  color: #fff;
   border: 1px solid #444;
+  border-radius: 16px;
+  padding: 8px 12px;
+  margin-right: auto;
+  max-width: 70%;
 }
 
 /* input row */
