@@ -4,7 +4,7 @@ const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
 const currentQuestionEl = document.getElementById("currentQuestion");
 
-/* Paste your Cloudflare Worker URL below */
+/* Replace this with your Cloudflare Worker URL */
 const WORKER_URL = "YOUR_WORKER_URL_HERE";
 
 /* Conversation history (LevelUp) */
@@ -21,7 +21,7 @@ You ONLY answer questions about:
 - L'Oréal fragrances
 - Beauty routines, product recommendations, and how to use L'Oréal items
 
-If someone asks about anything NOT related to beauty or L'Oréal, respond with:
+If someone asks anything NOT related to beauty or L'Oréal, reply:
 "I'm here to help with L'Oréal beauty products and routines only."
 
 Keep your answers warm, friendly, short, and helpful.
@@ -48,45 +48,38 @@ chatForm.addEventListener("submit", async (e) => {
   const text = userInput.value.trim();
   if (!text) return;
 
-  // Show user message bubble
+  // Show user bubble
   addMessage(text, "user");
 
-  // Save user message to conversation history
+  // Save to conversation history
   messages.push({ role: "user", content: text });
 
-  // LevelUp: show latest question
+  // LevelUp: show latest question at top
   currentQuestionEl.textContent = `Latest question: "${text}"`;
 
   // Clear input
   userInput.value = "";
 
-  // Temporary "thinking" bubble
+  // Temporary AI thinking bubble
   const thinking = document.createElement("div");
   thinking.classList.add("msg", "ai");
   thinking.textContent = "⏳ Thinking...";
   chatWindow.appendChild(thinking);
 
   try {
-    // Send messages array to Cloudflare Worker
     const res = await fetch(WORKER_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify({ messages })
     });
 
     const data = await res.json();
-
-    // Extract the assistant's reply
     const reply = data?.choices?.[0]?.message?.content ||
                   "Sorry, I couldn’t generate a response.";
 
-    // Remove thinking bubble
     thinking.remove();
-
-    // Show assistant bubble
     addMessage(reply, "ai");
 
-    // Save to history
     messages.push({ role: "assistant", content: reply });
 
   } catch (err) {
