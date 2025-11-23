@@ -4,7 +4,7 @@ const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
 const currentQuestionEl = document.getElementById("currentQuestion");
 
-/* Replace this with your Cloudflare Worker URL */
+/* Your Cloudflare Worker URL */
 const WORKER_URL = "https://lingering-cherry-b621.dcbela.workers.dev/";
 
 /* Conversation history (LevelUp) */
