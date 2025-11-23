@@ -7,12 +7,12 @@ export default {
       "Content-Type": "application/json"
     };
 
-    // 1) CORS preflight (browser OPTIONS request)
+    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    // 2) GET test (when opening Worker URL in browser)
+    // Simple GET test
     if (request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -23,7 +23,6 @@ export default {
       );
     }
 
-    // 3) POST request from your website
     try {
       const apiKey = env.OPENAI_API_KEY;
       if (!apiKey) {
@@ -50,6 +49,18 @@ export default {
 
       const data = await openaiRes.json();
 
+      // NEW: if OpenAI returned an error, pass it back clearly
+      if (!openaiRes.ok || data.error) {
+        return new Response(
+          JSON.stringify({
+            error: data.error?.message || "OpenAI API error",
+            raw: data
+          }),
+          { status: 200, headers: corsHeaders }
+        );
+      }
+
+      // Normal successful response
       return new Response(JSON.stringify(data), {
         headers: corsHeaders
       });
