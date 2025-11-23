@@ -1,13 +1,13 @@
-/* DOM Elements */
+// ===== Grab DOM elements =====
 const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
 const currentQuestionEl = document.getElementById("currentQuestion");
 
-/* Your Cloudflare Worker URL */
+// ===== Your Cloudflare Worker URL =====
 const WORKER_URL = "https://lingering-cherry-b621.dcbela.workers.dev";
 
-/* Conversation history (LevelUp) */
+// ===== Conversation history (for LevelUp + multi-turn chat) =====
 const messages = [
   {
     role: "system",
@@ -29,7 +29,7 @@ Keep your answers warm, friendly, short, and helpful.
   }
 ];
 
-/* Add message bubbles to chat */
+// ===== Helper to add a message bubble =====
 function addMessage(text, sender = "ai") {
   const msg = document.createElement("div");
   msg.classList.add("msg", sender);
@@ -38,10 +38,10 @@ function addMessage(text, sender = "ai") {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-/* Initial greeting */
+// ===== Initial greeting =====
 addMessage("👋 Hi! I’m your L’Oréal beauty assistant. Ask me about products or routines!", "ai");
 
-/* Handle form submit */
+// ===== Handle form submit =====
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -51,39 +51,55 @@ chatForm.addEventListener("submit", async (e) => {
   // Show user bubble
   addMessage(text, "user");
 
-  // Save to conversation history
+  // Save user message to conversation history
   messages.push({ role: "user", content: text });
 
-  // LevelUp: show latest question at top
-  currentQuestionEl.textContent = `Latest question: "${text}"`;
+  // Show latest question at the top (LevelUp)
+  if (currentQuestionEl) {
+    currentQuestionEl.textContent = `Latest question: "${text}"`;
+  }
 
   // Clear input
   userInput.value = "";
 
-  // Temporary AI thinking bubble
+  // Show temporary "thinking" bubble
   const thinking = document.createElement("div");
   thinking.classList.add("msg", "ai");
   thinking.textContent = "⏳ Thinking...";
   chatWindow.appendChild(thinking);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 
   try {
+    // Send request to your Cloudflare Worker
     const res = await fetch(WORKER_URL, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      // no custom headers so the browser avoids a CORS preflight
       body: JSON.stringify({ messages })
     });
 
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content ||
-                  "Sorry, I couldn’t generate a response.";
+    // If the response itself failed (non-2xx)
+    if (!res.ok) {
+      thinking.remove();
+      addMessage("⚠️ Server error. Please try again.", "ai");
+      return;
+    }
 
+    const data = await res.json();
+
+    const reply =
+      data?.choices?.[0]?.message?.content ||
+      "Sorry, I couldn’t generate a response.";
+
+    // Remove "thinking" and show real reply
     thinking.remove();
     addMessage(reply, "ai");
 
+    // Save assistant reply to conversation history
     messages.push({ role: "assistant", content: reply });
-
   } catch (err) {
+    // Network / CORS / other error
     thinking.remove();
     addMessage("⚠️ Error: Could not connect to the server.", "ai");
+    console.error("Chat error:", err);
   }
 });
