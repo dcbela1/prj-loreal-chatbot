@@ -73,28 +73,39 @@ chatForm.addEventListener("submit", async (e) => {
     // Send request to your Cloudflare Worker
     const res = await fetch(WORKER_URL, {
       method: "POST",
-      // no custom headers so the browser avoids a CORS preflight
+      // No custom headers so the browser avoids a CORS preflight
       body: JSON.stringify({ messages })
     });
 
-    // If the response itself failed (non-2xx)
-    if (!res.ok) {
-      thinking.remove();
-      addMessage("⚠️ Server error. Please try again.", "ai");
-      return;
-    }
-const data = await res.json();
+    const data = await res.json();
+    console.log("Worker / OpenAI response:", data);
 
-let reply;
-if (data.error) {
-  reply = `⚠️ OpenAI error: ${data.error}`;
-} else {
-  reply =
-    data?.choices?.[0]?.message?.content ||
-    "Sorry, I couldn’t generate a response.";
-}
-  
-    // Remove "thinking" and show real reply
+    let reply;
+
+    // If the Worker/OpenAI returned an error object
+    if (data.error) {
+      // data.error can be a string or an object
+      const errMsg =
+        typeof data.error === "string"
+          ? data.error
+          : data.error.message || JSON.stringify(data.error);
+
+      reply =
+        "⚠️ I’m having trouble reaching the OpenAI service right now.\n" +
+        (errMsg.includes("quota")
+          ? "It looks like the API account has run out of quota or needs billing set up."
+          : `Details: ${errMsg}`);
+    } else if (Array.isArray(data.choices) && data.choices[0]?.message?.content) {
+      // Normal successful response
+      reply = data.choices[0].message.content;
+    } else {
+      // Unknown format fallback
+      reply =
+        "⚠️ I received an unexpected response format from the server.\n" +
+        "Please try again later.";
+    }
+
+    // Remove "thinking" and show reply
     thinking.remove();
     addMessage(reply, "ai");
 
@@ -102,8 +113,8 @@ if (data.error) {
     messages.push({ role: "assistant", content: reply });
   } catch (err) {
     // Network / CORS / other error
+    console.error("Chat error:", err);
     thinking.remove();
     addMessage("⚠️ Error: Could not connect to the server.", "ai");
-    console.error("Chat error:", err);
   }
 });
