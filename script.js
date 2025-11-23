@@ -83,13 +83,17 @@ chatForm.addEventListener("submit", async (e) => {
       addMessage("⚠️ Server error. Please try again.", "ai");
       return;
     }
+const data = await res.json();
 
-    const data = await res.json();
-
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn’t generate a response.";
-
+let reply;
+if (data.error) {
+  reply = `⚠️ OpenAI error: ${data.error}`;
+} else {
+  reply =
+    data?.choices?.[0]?.message?.content ||
+    "Sorry, I couldn’t generate a response.";
+}
+  
     // Remove "thinking" and show real reply
     thinking.remove();
     addMessage(reply, "ai");
